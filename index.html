@@ -227,6 +227,7 @@
                     <div class="silence-config">
                         <label for="silenceThreshold">Seuil (sec)</label>
                         <input id="silenceThreshold" type="number" min="1" max="60" value="5" class="number-input">
+                        <button id="logBtn" class="icon-btn" title="Journal des silences détectés">📋 Log</button>
                     </div>
                 </div>
 
@@ -250,6 +251,22 @@
             <div class="silence-overlay-title">SILENCE DÉTECTÉ</div>
             <div class="silence-overlay-sub">Aucun signal audio depuis <span id="silenceDuration">0</span>s</div>
             <button id="silenceDismissBtn" class="silence-dismiss-btn">Fermer l'alerte</button>
+        </div>
+    </div>
+
+    <!-- ══════════════════ LOG SILENCE — fenêtre journal ══════════════════ -->
+    <div id="silenceLogModal" class="silence-log-modal hidden">
+        <div class="log-modal-card">
+            <div class="log-modal-header">
+                <span class="log-modal-title">📋 Journal de silence</span>
+                <div class="log-modal-actions">
+                    <button id="clearLogBtn" class="icon-btn">Effacer</button>
+                    <button id="closeLogBtn" class="icon-btn">✕</button>
+                </div>
+            </div>
+            <div id="logEntries" class="log-entries">
+                <div class="log-empty">Aucun événement enregistré.</div>
+            </div>
         </div>
     </div>
 

@@ -54,6 +54,9 @@ const state = {
 let silenceOverlayDismissed   = false; // true = l'utilisateur a fermé l'alerte pour ce cycle
 let silenceDetectionActive    = true;  // false = détection désactivée par l'utilisateur
 
+// Journal de silence
+const silenceLog = []; // { type: 'silence'|'resume', time: Date, duration?: number }
+
 // ═══════════════════════════════════════════════
 // SÉLECTEURS DOM
 // ═══════════════════════════════════════════════
@@ -104,6 +107,13 @@ const dom = {
     silenceDuration:    $('silenceDuration'),
     silenceDismissBtn:  $('silenceDismissBtn'),
     clock:              $('clock'),
+
+    // Log
+    logBtn:         $('logBtn'),
+    silenceLogModal:$('silenceLogModal'),
+    logEntries:     $('logEntries'),
+    clearLogBtn:    $('clearLogBtn'),
+    closeLogBtn:    $('closeLogBtn'),
 
     // PiP
     pipBtn:         $('pipBtn'),
@@ -697,6 +707,47 @@ function renderPhase(bufL, bufR, correlation) {
 }
 
 // ═══════════════════════════════════════════════
+// JOURNAL DE SILENCE
+// ═══════════════════════════════════════════════
+
+function addSilenceLogEntry(type) {
+    const now = new Date();
+    const entry = { type, time: now };
+    if (type === 'resume' && silenceLog.length > 0) {
+        const last = [...silenceLog].reverse().find(e => e.type === 'silence');
+        if (last) entry.duration = Math.round((now - last.time) / 1000);
+    }
+    silenceLog.push(entry);
+    if (silenceLog.length > 500) silenceLog.shift();
+}
+
+function formatLogDate(date) {
+    return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', { hour12: false });
+}
+
+function renderLogEntries() {
+    const container = dom.logEntries;
+    if (!container) return;
+    if (silenceLog.length === 0) {
+        container.innerHTML = '<div class="log-empty">Aucun événement enregistré.</div>';
+        return;
+    }
+    container.innerHTML = '';
+    [...silenceLog].reverse().forEach(entry => {
+        const div = document.createElement('div');
+        div.className = 'log-entry ' + entry.type;
+        const icon  = entry.type === 'silence' ? '🔇' : '🔊';
+        const label = entry.type === 'silence' ? 'Silence détecté' : 'Son repris';
+        const sub   = entry.duration != null ? `durée : ${entry.duration}s` : '';
+        div.innerHTML =
+            `<span class="log-entry-icon">${icon}</span>` +
+            `<span class="log-entry-text"><strong>${label}</strong>${sub ? '<span>' + sub + '</span>' : ''}</span>` +
+            `<span class="log-entry-time">${formatLogDate(entry.time)}</span>`;
+        container.appendChild(div);
+    });
+}
+
+// ═══════════════════════════════════════════════
 // RENDER : SILENCE
 // ═══════════════════════════════════════════════
 function updateSilenceDetection(dbMax) {
@@ -722,6 +773,7 @@ function updateSilenceDetection(dbMax) {
             silenceOverlayDismissed  = false; // le prochain silence rouvrira l'alerte
             dom.silenceIndicator.classList.remove('silent');
             dom.silenceOverlay.classList.add('hidden');
+            addSilenceLogEntry('resume');
         }
     } else {
         const elapsed = (Date.now() - state.lastSignalTime) / 1000;
@@ -731,6 +783,7 @@ function updateSilenceDetection(dbMax) {
             if (!state.silenceDetected) {
                 state.silenceDetected = true;
                 dom.silenceIndicator.classList.add('silent');
+                addSilenceLogEntry('silence');
             }
 
             // Met à jour le compteur de secondes dans l'overlay
@@ -1101,6 +1154,28 @@ dom.resetLufsBtn.addEventListener('click', () => {
 
 // PiP
 dom.pipBtn.addEventListener('click', togglePip);
+
+// Log — ouvre la fenêtre journal
+dom.logBtn.addEventListener('click', () => {
+    dom.silenceLogModal.classList.remove('hidden');
+    renderLogEntries();
+});
+
+// Fermer le journal
+dom.closeLogBtn.addEventListener('click', () => {
+    dom.silenceLogModal.classList.add('hidden');
+});
+
+// Effacer le journal
+dom.clearLogBtn.addEventListener('click', () => {
+    silenceLog.length = 0;
+    renderLogEntries();
+});
+
+// Fermeture au clic sur le fond
+dom.silenceLogModal.addEventListener('click', e => {
+    if (e.target === dom.silenceLogModal) dom.silenceLogModal.classList.add('hidden');
+});
 
 // ═══════════════════════════════════════════════
 // VÉRIFICATION DU SUPPORT WEB AUDIO API
