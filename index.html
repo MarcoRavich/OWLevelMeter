@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RadioTools - LevelMeter by MrMazure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <link rel="icon" href="favicon.png" type="image/png">
+</head>
+
+<body>
+
+    <!-- ══════════════════ HEADER ══════════════════ -->
+    <header id="top-header">
+        <div class="logo-container">
+            <img src="favicon.png" class="logo-icon" alt="RadioTools">
+            <h1 class="title">RadioTools <span class="subtitle">| LevelMeter By MrMazure</span></h1>
+        </div>
+        <div class="header-controls">
+            <!-- Bouton sélection source audio (panneau flottant, même pattern que l'inspiration) -->
+            <button id="audioSourceBtn" class="control-btn audio-source-btn" title="Choisir la source audio d'entrée">
+                🎙 Entrée audio
+            </button>
+            <!-- PiP button -->
+            <button id="pipBtn" class="control-btn pip-btn" title="Ouvrir le vumètre en Picture-in-Picture">
+                <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                    <path
+                        d="M3 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1h-5v4a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 1v9h6v-4h5V5H5z" />
+                </svg>
+                PiP
+            </button>
+        </div>
+    </header>
+
+    <!-- ══════════════════ PERMISSION / ERROR STATES ══════════════════ -->
+    <div id="permissionOverlay" class="overlay active">
+        <div class="overlay-card">
+            <div class="overlay-icon">🎙️</div>
+            <h2>Accès au microphone requis</h2>
+            <p>Level Meter a besoin d'accéder à votre microphone ou entrée ligne pour analyser le signal audio.</p>
+            <button id="requestPermBtn" class="btn-primary">Autoriser l'accès</button>
+        </div>
+    </div>
+
+    <div id="errorOverlay" class="overlay">
+        <div class="overlay-card">
+            <div class="overlay-icon error">⚠️</div>
+            <h2 id="errorTitle">Erreur</h2>
+            <p id="errorMsg"></p>
+            <button id="retryBtn" class="btn-primary">Réessayer</button>
+        </div>
+    </div>
+
+    <!-- ══════════════════ MAIN APP ══════════════════ -->
+    <main id="app" class="hidden">
+
+        <!-- ROW 1: VU-mètre principal + Spectre FFT -->
+        <div class="row row-main">
+
+            <!-- ── VU-METRE PRINCIPAL ── -->
+            <section class="card card-vumeter">
+                <div class="card-header">
+                    <h2 class="section-title">VU-Mètre</h2>
+                    <div class="card-actions">
+                        <button id="resetPeakBtn" class="icon-btn" title="Réinitialiser le peak">
+                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                <path d="M8 3a5 5 0 11-4.546 2.914.5.5 0 11.908-.417A4 4 0 108 4v1L6 3l2-2v1z" />
+                            </svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="vumeter-body">
+                    <!-- Clip indicator -->
+                    <div id="clipIndicator" class="clip-indicator">CLIP</div>
+
+                    <!-- dB numeric display -->
+                    <div class="db-display">
+                        <span id="dbValue" class="db-value">-∞</span>
+                        <span class="db-unit">dB</span>
+                    </div>
+
+                    <!-- VU bar (vertical) — L | scale | R -->
+                    <div class="vumeter-container">
+                        <!-- Canal gauche -->
+                        <div class="vu-channel">
+                            <div class="vu-label">L</div>
+                            <div id="vuBarL" class="vu-bar">
+                                <div id="vuFillL" class="vu-empty"></div>
+                                <div id="vuPeakL" class="vu-peak"></div>
+                            </div>
+                        </div>
+                        <!-- Échelle graduée : ticks positionnés sur l'axe dB linéaire -->
+                        <!-- top% = (1 - dbToPercent(db)/100)*100 -->
+                        <div class="vu-scale-col">
+                            <div class="vu-scale-spacer"></div>
+                            <div class="vu-scale">
+                                <span class="vu-tick" style="top:0%">0</span>
+                                <span class="vu-tick" style="top:10%">-6</span>
+                                <span class="vu-tick" style="top:20%">-12</span>
+                                <span class="vu-tick" style="top:33.3%">-20</span>
+                                <span class="vu-tick" style="top:50%">-30</span>
+                                <span class="vu-tick" style="top:66.7%">-40</span>
+                                <span class="vu-tick" style="top:100%">-60</span>
+                            </div>
+                        </div>
+                        <!-- Canal droit -->
+                        <div class="vu-channel">
+                            <div class="vu-label">R</div>
+                            <div id="vuBarR" class="vu-bar">
+                                <div id="vuFillR" class="vu-empty"></div>
+                                <div id="vuPeakR" class="vu-peak"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── SPECTRE FFT ── -->
+            <section class="card card-spectrum">
+                <div class="card-header">
+                    <h2 class="section-title">Analyseur de Spectre</h2>
+                    <div class="card-actions">
+                        <span id="dominantFreq" class="freq-badge">– Hz</span>
+                    </div>
+                </div>
+                <canvas id="spectrumCanvas" class="spectrum-canvas"></canvas>
+                <div class="spectrum-labels">
+                    <span>20Hz</span><span>100Hz</span><span>500Hz</span>
+                    <span>1kHz</span><span>5kHz</span><span>20kHz</span>
+                </div>
+            </section>
+        </div>
+
+        <!-- ROW 2: LUFS + Corrélation stéréo + Fréquence + Silence -->
+        <div class="row row-metrics">
+
+            <!-- ── LUFS ── -->
+            <section class="card card-lufs">
+                <div class="card-header">
+                    <h2 class="section-title">Loudness LUFS</h2>
+                    <button id="resetLufsBtn" class="icon-btn" title="Réinitialiser la mesure intégrée">
+                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                            <path d="M8 3a5 5 0 11-4.546 2.914.5.5 0 11.908-.417A4 4 0 108 4v1L6 3l2-2v1z" />
+                        </svg>
+                        Reset
+                    </button>
+                </div>
+                <div class="lufs-grid">
+                    <div class="metric-block">
+                        <div class="metric-label">MOMENTANÉ</div>
+                        <div id="lufsM" class="metric-value">–</div>
+                        <div class="metric-unit">LUFS</div>
+                    </div>
+                    <div class="metric-block">
+                        <div class="metric-label">INTÉGRÉ</div>
+                        <div id="lufsI" class="metric-value accent">–</div>
+                        <div class="metric-unit">LUFS</div>
+                    </div>
+                </div>
+                <div class="lufs-bar-wrap">
+                    <div class="lufs-bar-track">
+                        <div id="lufsMBar" class="lufs-bar-fill"></div>
+                    </div>
+                    <div class="lufs-scale">
+                        <span>-23</span><span>-18</span><span>-14</span><span>-9</span><span>0</span>
+                    </div>
+                </div>
+                <p class="lufs-norm">Norme EBU R128 : cible –23 LUFS (radio)</p>
+            </section>
+
+            <!-- ── CORRÉLATION STÉRÉO ── -->
+            <section class="card card-phase">
+                <div class="card-header">
+                    <h2 class="section-title">Corrélation Stéréo</h2>
+                </div>
+                <div class="phase-body">
+                    <canvas id="phaseCanvas" class="phase-canvas"></canvas>
+                    <div class="phase-gauge-wrap">
+                        <div class="phase-gauge">
+                            <div id="phaseCursor" class="phase-cursor"></div>
+                        </div>
+                        <div class="phase-scale">
+                            <span>-1</span><span>0</span><span>+1</span>
+                        </div>
+                    </div>
+                    <div id="phaseValue" class="phase-value">+0.00</div>
+                    <p id="phaseStatus" class="phase-status ok">Phase correcte</p>
+                </div>
+            </section>
+
+            <!-- ── FRÉQUENCE DOMINANTE + SILENCE ── -->
+            <section class="card card-misc">
+                <div class="card-header">
+                    <h2 class="section-title">Analyse</h2>
+                </div>
+
+                <!-- Fréquence dominante -->
+                <div class="misc-block">
+                    <div class="misc-label">FRÉQUENCE DOMINANTE</div>
+                    <div class="misc-value-row">
+                        <span id="fundFreq" class="misc-value">–</span>
+                        <span class="misc-unit">Hz</span>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Détection de silence -->
+                <div class="misc-block">
+                    <div class="misc-label-row">
+                        <span class="misc-label">DÉTECTION SILENCE</span>
+                        <div id="silenceIndicator" class="silence-dot"></div>
+                    </div>
+                    <!-- Toggle activer/désactiver -->
+                    <label class="toggle-wrap" title="Activer ou désactiver la détection de silence">
+                        <input type="checkbox" id="silenceEnabled" checked>
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                        <span class="toggle-text" id="silenceEnabledLabel">Actif</span>
+                    </label>
+                    <!-- Seuil de durée -->
+                    <div class="silence-config">
+                        <label for="silenceThreshold">Seuil (sec)</label>
+                        <input id="silenceThreshold" type="number" min="1" max="60" value="5" class="number-input">
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Horloge -->
+                <div class="misc-block">
+                    <div class="misc-label">HEURE</div>
+                    <div id="clock" class="clock">--:--:--</div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- ══════════════════ SILENCE OVERLAY — alerte plein écran clignotante ══════════════════ -->
+    <div id="silenceOverlay" class="silence-overlay hidden">
+        <div class="silence-overlay-card">
+            <div class="silence-overlay-icon">🔇</div>
+            <div class="silence-overlay-title">SILENCE DÉTECTÉ</div>
+            <div class="silence-overlay-sub">Aucun signal audio depuis <span id="silenceDuration">0</span>s</div>
+            <button id="silenceDismissBtn" class="silence-dismiss-btn">Fermer l'alerte</button>
+        </div>
+    </div>
+
+    <!-- ══════════════════ PiP CANVAS (caché, utilisé pour la vidéo PiP) ══════════════════ -->
+    <canvas id="pipCanvas" style="display:none;" width="160" height="285"></canvas>
+    <video id="pipVideo" style="display:none;" muted playsinline></video>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

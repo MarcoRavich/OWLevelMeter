@@ -1,0 +1,1078 @@
+/* ═══════════════════════════════════════════════
+   Level Meter – Style
+   Inspiré du design RadioBox / RadioTools
+   ═══════════════════════════════════════════════ */
+
+:root {
+    --bg-app:     #1c1c20;
+    --bg-panel:   #26262b;
+    --bg-element: #303037;
+    --bg-hover:   #3a3a42;
+    --border:     #3d3d45;
+
+    --text-main:  #fafafa;
+    --text-muted: #a1a1aa;
+
+    --accent:       #6366f1;
+    --accent-hover: #4f46e5;
+    --danger:       #ef4444;
+    --success:      #22c55e;
+    --warning:      #f59e0b;
+
+    --vu-green:  #22c55e;
+    --vu-orange: #f59e0b;
+    --vu-red:    #ef4444;
+
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --gap:       14px;
+    --radius:    8px;
+    --radius-sm: 4px;
+
+    /* Hauteur du label L/R au-dessus des barres VU */
+    --vu-label-h: 20px;
+}
+
+/* ─── Reset ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/*
+ * LAYOUT DE BASE : html/body occupent 100% de la fenêtre.
+ * L'overflow est géré par #app (scroll si le contenu déborde).
+ */
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    background: var(--bg-app);
+    color: var(--text-main);
+    font-family: var(--font-family);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* pas de scroll sur body, #app gère ça */
+}
+
+/* ═══════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════ */
+#top-header {
+    height: 60px;
+    min-height: 60px;
+    flex-shrink: 0;
+    background: var(--bg-app);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    gap: 16px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+.logo-icon {
+    height: 32px;
+    width: 32px;
+    flex-shrink: 0;
+    border-radius: 6px;
+}
+
+/* Titre sur une ligne — style RadioBox */
+.title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+}
+
+.subtitle {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* (source-control / source-select remplacés par .audio-source-btn + panneau flottant) */
+
+/* ─── Boutons ─── */
+.control-btn {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-element);
+    color: var(--text-muted);
+    font-family: var(--font-family);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.control-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+    border-color: var(--text-muted);
+}
+
+.pip-btn.active {
+    border-color: var(--accent);
+    background: rgba(99,102,241,0.15);
+    color: var(--accent);
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: var(--font-family);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+    border-color: var(--text-muted);
+}
+
+.btn-primary {
+    padding: 10px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-family);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover { background: var(--accent-hover); }
+
+/* ═══════════════════════════════════════════════
+   OVERLAYS
+   ═══════════════════════════════════════════════ */
+.overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(28,28,32,0.96);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.overlay.active { display: flex; }
+
+.overlay-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 48px;
+    text-align: center;
+    max-width: 420px;
+    width: calc(100% - 32px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.overlay-icon { font-size: 3rem; line-height: 1; }
+.overlay-card h2 { font-size: 1.2rem; font-weight: 700; }
+.overlay-card p  { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
+
+/* ═══════════════════════════════════════════════
+   MAIN APP — CHAÎNE FLEX POUR RESIZE TOTAL
+   ═══════════════════════════════════════════════ */
+#app {
+    /*
+     * flex: 1 + min-height: 0 = remplit tout l'espace vertical dispo.
+     * overflow-y: auto = scroll uniquement si le contenu déborde
+     * (ex. écran très bas ou fenêtre minuscule)
+     */
+    flex: 1;
+    min-height: 0;
+    padding: var(--gap);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#app.hidden { display: none; }
+
+/* ─── Ligne principale : VU-mètre + Spectre ─── */
+.row-main {
+    flex: 1 1 0;       /* grandit pour remplir l'espace dispo */
+    min-height: 0;     /* permet la réduction sans plancher fixe */
+    display: flex;
+    gap: var(--gap);
+    align-items: stretch;
+}
+
+/* ─── Ligne métriques : LUFS, phase, misc ─── */
+.row-metrics {
+    flex: 0 0 auto;    /* hauteur naturelle du contenu, ne grandit pas */
+    display: flex;
+    gap: var(--gap);
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+/* ─── Card base ─── */
+.card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    min-height: 0;
+}
+
+.card-header {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-element);
+    flex-shrink: 0;
+}
+
+.section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+
+.card-actions { display: flex; align-items: center; gap: 8px; }
+
+/* ═══════════════════════════════════════════════
+   VU-MÈTRE PRINCIPAL
+   ═══════════════════════════════════════════════ */
+.card-vumeter {
+    width: 196px;
+    flex-shrink: 0;
+}
+
+.vumeter-body {
+    flex: 1;
+    min-height: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Indicateur CLIP */
+.clip-indicator {
+    width: 100%;
+    text-align: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-element);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    transition: all 0.1s;
+    flex-shrink: 0;
+}
+
+.clip-indicator.clipping {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+    box-shadow: 0 0 14px rgba(239,68,68,0.55);
+    animation: clipPulse 0.3s ease;
+}
+
+@keyframes clipPulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+
+/* Affichage dB numérique */
+.db-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.db-value {
+    font-size: 2rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    min-width: 72px;
+    text-align: right;
+}
+
+.db-unit {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* ── Conteneur barres : [canal L] [scale] [canal R] ── */
+.vumeter-container {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    align-items: stretch; /* CLEF : tous les enfants s'étirent à la même hauteur */
+}
+
+/* Canal (label + barre) — occupe exactement la moitié de l'espace */
+.vu-channel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    min-height: 0;
+}
+
+.vu-label {
+    height: var(--vu-label-h);
+    line-height: var(--vu-label-h);
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+/* La barre remplit tout l'espace restant dans son canal */
+.vu-bar {
+    flex: 1;
+    position: relative;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    min-height: 60px;
+    /* Gradient baked-in : vert bas → orange → rouge haut */
+    background: linear-gradient(
+        to top,
+        var(--vu-green)  0%,
+        var(--vu-green)  60%,
+        var(--vu-orange) 60%,
+        var(--vu-orange) 80%,
+        var(--vu-red)    80%,
+        var(--vu-red)    100%
+    );
+}
+
+/*
+ * Overlay sombre descendant depuis le haut.
+ * Quand height passe de 100% → 0%, le gradient se révèle de bas en haut.
+ * Mis à jour en JS : vuFillX.style.height = (100 - dbToPercent(db)) + '%'
+ */
+.vu-empty {
+    position: absolute;
+    inset: 0 0 auto 0; /* top=0, left=0, right=0, height via JS */
+    height: 100%;
+    background: var(--bg-element);
+    transition: height 0.05s linear;
+    z-index: 1;
+    border-radius: 2px 2px 0 0;
+}
+
+/* Ligne de peak — au-dessus de l'overlay */
+.vu-peak {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 1px;
+    bottom: 0%;
+    z-index: 2;
+    opacity: 0;
+    transition: bottom 0.05s linear;
+    box-shadow: 0 0 4px rgba(255,255,255,0.6);
+}
+
+.vu-peak.visible { opacity: 1; }
+
+/* ── Colonne d'échelle centrale ── */
+.vu-scale-col {
+    flex: 0 0 28px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/*
+ * Espaceur = hauteur du label (.vu-label) + gap du canal (.vu-channel gap: 4px)
+ * Aligne le début de l'échelle avec le haut de la barre.
+ */
+.vu-scale-spacer {
+    flex-shrink: 0;
+    height: calc(var(--vu-label-h) + 4px); /* 20px + 4px = 24px */
+}
+
+/*
+ * Zone de l'échelle : étire jusqu'en bas (même hauteur que les barres).
+ * Chaque .vu-tick est positionné en absolu avec top = position dB correcte.
+ */
+.vu-scale {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+}
+
+.vu-tick {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.54rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    line-height: 1;
+    transform: translateY(-50%); /* centre le label sur la position dB */
+}
+
+/* Le dernier tick (−60) ne déborde pas en bas */
+.vu-tick:last-child { transform: translateY(-100%); }
+/* Le premier tick (0) ne déborde pas en haut */
+.vu-tick:first-child { transform: translateY(0); }
+
+/* ═══════════════════════════════════════════════
+   SPECTRE FFT
+   ═══════════════════════════════════════════════ */
+.card-spectrum {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+}
+
+/*
+ * Le canvas doit avoir une taille réelle mesurable par JS (offsetWidth/Height).
+ * min-height: 0 permet la réduction verticale.
+ */
+.spectrum-canvas {
+    flex: 1;
+    width: 100%;
+    display: block;
+    min-height: 0;
+}
+
+.spectrum-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 12px 6px;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.freq-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(99,102,241,0.12);
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════
+   LUFS
+   ═══════════════════════════════════════════════ */
+.card-lufs {
+    flex: 1.2;
+    min-width: 220px;
+}
+
+.lufs-grid {
+    display: flex;
+    padding: 10px;
+    gap: 0;
+}
+
+.metric-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border-right: 1px solid var(--border);
+}
+
+.metric-block:last-child { border-right: none; }
+
+.metric-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+
+.metric-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.metric-value.accent { color: var(--accent); }
+
+.metric-unit {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.lufs-bar-wrap {
+    padding: 0 12px 4px;
+}
+
+.lufs-bar-track {
+    height: 8px;
+    background: var(--bg-element);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 3px;
+}
+
+.lufs-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.15s, background-color 0.15s;
+    background: var(--vu-green);
+}
+
+.lufs-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.58rem;
+    color: var(--text-muted);
+}
+
+.lufs-norm {
+    padding: 6px 12px 10px;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+}
+
+/* ═══════════════════════════════════════════════
+   CORRÉLATION STÉRÉO
+   ═══════════════════════════════════════════════ */
+.card-phase {
+    flex: 1;
+    min-width: 190px;
+}
+
+.phase-body {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.phase-canvas {
+    width: 100%;
+    height: 100px;
+    display: block;
+    flex-shrink: 0;
+}
+
+.phase-gauge-wrap { width: 100%; flex-shrink: 0; }
+
+.phase-gauge {
+    position: relative;
+    height: 10px;
+    background: linear-gradient(to right, var(--danger), var(--warning) 50%, var(--success));
+    border-radius: 5px;
+    margin-bottom: 4px;
+    border: 1px solid var(--border);
+}
+
+.phase-cursor {
+    position: absolute;
+    top: -4px;
+    width: 4px;
+    height: 18px;
+    background: #fff;
+    border-radius: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: left 0.1s;
+    box-shadow: 0 0 4px rgba(0,0,0,0.6);
+}
+
+.phase-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.58rem;
+    color: var(--text-muted);
+}
+
+.phase-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+}
+
+.phase-status {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid currentColor;
+}
+
+.phase-status.ok   { color: var(--success); background: rgba(34,197,94,0.08); }
+.phase-status.warn { color: var(--warning); background: rgba(245,158,11,0.08); }
+.phase-status.bad  { color: var(--danger);  background: rgba(239,68,68,0.08); }
+
+/* ═══════════════════════════════════════════════
+   MISC (fréquence + silence + horloge)
+   ═══════════════════════════════════════════════ */
+.card-misc {
+    flex: 0.8;
+    min-width: 170px;
+}
+
+.misc-block {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.misc-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+
+.misc-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.misc-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.misc-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.misc-unit { font-size: 0.82rem; color: var(--text-muted); }
+
+.divider { height: 1px; background: var(--border); flex-shrink: 0; }
+
+/* Silence dot */
+.silence-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px rgba(34,197,94,0.5);
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+
+.silence-dot.silent {
+    background: var(--danger);
+    box-shadow: 0 0 10px rgba(239,68,68,0.7);
+    animation: silencePulse 1s ease-in-out infinite;
+}
+
+@keyframes silencePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+/* ── Toggle switch (activer/désactiver détection silence) ── */
+.toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-wrap input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-track {
+    position: relative;
+    width: 34px;
+    height: 18px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.toggle-wrap input:checked ~ .toggle-track {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    transition: left 0.2s;
+}
+
+.toggle-wrap input:checked ~ .toggle-track .toggle-thumb {
+    left: 18px;
+}
+
+.toggle-text {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* ── Overlay silence plein écran ── */
+.silence-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: silenceBg 0.7s ease-in-out infinite;
+    pointer-events: auto;
+}
+
+.silence-overlay.hidden { display: none !important; }
+
+@keyframes silenceBg {
+    0%, 100% { background: rgba(239, 68, 68, 0.06); }
+    50%       { background: rgba(239, 68, 68, 0.20); }
+}
+
+.silence-overlay-card {
+    background: var(--bg-panel);
+    border: 2px solid var(--danger);
+    border-radius: var(--radius);
+    padding: 48px 64px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: silenceCardGlow 0.7s ease-in-out infinite;
+}
+
+@keyframes silenceCardGlow {
+    0%, 100% { box-shadow: 0 0 30px rgba(239,68,68,0.25), 0 0 0 0   rgba(239,68,68,0); }
+    50%       { box-shadow: 0 0 70px rgba(239,68,68,0.55), 0 0 0 6px rgba(239,68,68,0); }
+}
+
+.silence-overlay-icon {
+    font-size: 5rem;
+    line-height: 1;
+    animation: silenceIconPulse 0.7s ease-in-out infinite;
+}
+
+@keyframes silenceIconPulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.12); }
+}
+
+.silence-overlay-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--danger);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: var(--font-family);
+    animation: silenceTitleFlash 0.7s ease-in-out infinite;
+}
+
+@keyframes silenceTitleFlash {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.75; }
+}
+
+.silence-overlay-sub {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-family: var(--font-family);
+}
+
+.silence-overlay-sub span {
+    font-weight: 700;
+    color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+}
+
+.silence-dismiss-btn {
+    margin-top: 8px;
+    padding: 11px 30px;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: background 0.2s, transform 0.1s;
+}
+
+.silence-dismiss-btn:hover  { background: #dc2626; }
+.silence-dismiss-btn:active { transform: scale(0.97); }
+
+.silence-config {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.number-input {
+    width: 52px;
+    height: 26px;
+    padding: 0 6px;
+    background: var(--bg-element);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    font-family: var(--font-family);
+    font-size: 0.82rem;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.number-input:focus { outline: none; border-color: var(--accent); }
+
+.clock {
+    font-size: 1.45rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════
+   PANNEAU SÉLECTION SOURCE AUDIO
+   Style calqué sur l'audio-output-panel de l'inspiration RadioBox
+   ═══════════════════════════════════════════════ */
+
+/* Bouton source dans le header */
+.audio-source-btn {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Panneau flottant */
+.audio-input-panel {
+    position: fixed;
+    z-index: 9999;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    min-width: 260px;
+    max-width: 380px;
+    padding: 6px 0;
+    font-family: var(--font-family);
+    font-size: 0.85rem;
+}
+
+.aip-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: background 0.15s;
+}
+
+.aip-item:hover { background: var(--bg-hover); }
+
+.aip-active { color: var(--accent); }
+
+.aip-check {
+    width: 16px;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.aip-label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.aip-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+.aip-msg {
+    padding: 8px 14px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.aip-unlock {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+/* ─── Responsive ─── */
+/* Tablette large : réduction douce du bouton source */
+@media (max-width: 1100px) {
+    .audio-source-btn { max-width: 180px; }
+}
+
+/*
+ * Tablette (≤900px) :
+ * VU-mètre passe en mode "bande horizontale" sur pleine largeur,
+ * les barres L/R s'étalent côte à côte avec une hauteur plus faible.
+ */
+@media (max-width: 900px) {
+    .row-main {
+        flex-direction: column;
+        flex: 0 0 auto; /* hauteur naturelle en colonne */
+    }
+
+    .card-vumeter {
+        width: 100%;
+    }
+
+    .vumeter-body {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .clip-indicator { order: 0; width: 100%; }
+    .db-display     { order: 1; }
+    .vumeter-container {
+        order: 2;
+        flex: 1 0 60%;
+        height: 140px;
+        min-height: 100px;
+    }
+
+    .vu-bar { min-height: 80px; }
+
+    .row-metrics { flex: 1 0 auto; }
+
+    .card-lufs  { flex: 1 1 calc(50% - var(--gap) / 2); min-width: 180px; }
+    .card-phase { flex: 1 1 calc(50% - var(--gap) / 2); min-width: 180px; }
+    .card-misc  { flex: 1 1 100%; }
+}
+
+/* Mobile (≤600px) */
+@media (max-width: 600px) {
+    #top-header {
+        height: auto;
+        padding: 10px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .title { font-size: 0.92rem; }
+    .subtitle { font-size: 0.8rem; }
+    .source-select { min-width: 110px; font-size: 0.8rem; }
+    .control-btn   { padding: 0 10px; font-size: 0.8rem; height: 32px; }
+
+    #app { padding: 8px; gap: 8px; }
+
+    .vumeter-container { height: 120px; }
+
+    .row-metrics { flex-direction: column; }
+    .card-lufs, .card-phase { min-width: unset; width: 100%; }
+
+    .db-value      { font-size: 1.6rem; }
+    .metric-value  { font-size: 1.3rem; }
+    .misc-value    { font-size: 1.3rem; }
+}
