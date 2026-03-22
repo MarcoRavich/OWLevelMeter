@@ -599,32 +599,52 @@ function renderSpectrum(dataArray) {
     }
 
     const bufLen = dataArray.length;
-    const barWidth = (W / bufLen) * 2.5;
-    let x = 0;
+    const sampleRateLocal = state.audioCtx ? state.audioCtx.sampleRate : 48000;
+    const fftSizeLocal = state.analyserFFT ? state.analyserFFT.fftSize : 2048;
+    const freqPerBinLocal = sampleRateLocal / fftSizeLocal;
+    const minFreq = 20;
+    const maxFreq = 20000;
+    const logMin = Math.log10(minFreq);
+    const logMax = Math.log10(maxFreq);
+
+    // Barres de 2px fixes, chaque colonne représente la fréquence log à sa position X.
+    // À gauche : chaque barre couvre peu de Hz. À droite : chaque barre couvre beaucoup de Hz.
+    const BAR_W  = 4;
+    const TOP_PAD = 6;
     let maxMag = 0, maxBin = 0;
 
-    for (let i = 0; i < bufLen; i++) {
-        const value = dataArray[i];          // 0–255
-        const mag = (value / 255) * 90 - 90; // map to -90…0 dB
-        const barH = ((mag + 90) / 90) * H;
+    for (let px = 0; px + BAR_W <= W; px += BAR_W) {
+        // Fréquences correspondant aux bords gauche et droit (linéaire)
+        const freqLow  = minFreq + (px / W)          * (maxFreq - minFreq);
+        const freqHigh = minFreq + ((px + BAR_W) / W) * (maxFreq - minFreq);
 
-        // Dégradé couleur selon la fréquence
-        const hue = 260 - (i / bufLen) * 220;
-        specCtx.fillStyle = `hsla(${hue}, 80%, 60%, 0.85)`;
-        specCtx.fillRect(x, H - barH, barWidth - 1, barH);
+        const binLow  = Math.max(1,          Math.floor(freqLow  / freqPerBinLocal));
+        const binHigh = Math.min(bufLen - 1, Math.ceil (freqHigh / freqPerBinLocal));
 
-        if (value > maxMag) { maxMag = value; maxBin = i; }
-        x += barWidth;
+        // Valeur max dans la plage de bins couverte par cette colonne
+        let barVal = 0, barBin = binLow;
+        for (let i = binLow; i <= binHigh; i++) {
+            if (dataArray[i] > barVal) { barVal = dataArray[i]; barBin = i; }
+        }
+
+        const mag  = (barVal / 255) * 90 - 90;
+        const barH = Math.min(H - TOP_PAD, ((mag + 90) / 90) * H);
+
+        // Dégradé bleu-violet → cyan
+        const t   = px / W;
+        const hue = 260 - t * 80;
+        specCtx.fillStyle = `hsla(${hue}, 75%, 58%, 0.9)`;
+        specCtx.fillRect(px, H - barH, BAR_W - 1, barH);
+
+        if (barVal > maxMag) { maxMag = barVal; maxBin = barBin; }
     }
 
     // Fréquence dominante dans le badge
-    const sampleRate = state.audioCtx ? state.audioCtx.sampleRate : 48000;
-    const fftSize = state.analyserFFT ? state.analyserFFT.fftSize : 2048;
-    const freqPerBin = sampleRate / fftSize;
-    const domFreq = maxBin * freqPerBin;
+    const domFreq = maxBin * freqPerBinLocal;
     dom.dominantFreq.textContent = domFreq > 0
         ? (domFreq < 1000 ? domFreq.toFixed(0) + ' Hz' : (domFreq / 1000).toFixed(2) + ' kHz')
         : '– Hz';
+    return domFreq;
 }
 
 // ═══════════════════════════════════════════════
@@ -846,7 +866,7 @@ function loop(timestamp) {
     renderVuMeter(dbL, dbR, linToDb(pkL), linToDb(pkR), isClipping);
 
     // ── Spectre ───────────────────────────────
-    renderSpectrum(freqData);
+    const specDomFreq = renderSpectrum(freqData);
 
     // ── LUFS (blocs de ~100ms) ────────────────
     const now = performance.now();
@@ -876,7 +896,13 @@ function loop(timestamp) {
     renderPhase(lissL, lissR, corr);
 
     // ── Fréquence fondamentale ─────────────────
-    updateFundamentalFreq(tdL);
+    if (specDomFreq > 0) {
+        dom.fundFreq.textContent = specDomFreq < 1000
+            ? Math.round(specDomFreq)
+            : (specDomFreq / 1000).toFixed(2) + 'k';
+    } else {
+        dom.fundFreq.textContent = '–';
+    }
 
     // ── Détection de silence ───────────────────
     updateSilenceDetection(Math.max(dbL, dbR));
