@@ -576,6 +576,17 @@ function renderVuMeter(dbL, dbR, peakDbL, peakDbR, isClipping) {
 // ═══════════════════════════════════════════════
 const specCtx = dom.spectrumCanvas.getContext('2d');
 
+// Hover cursor sur le spectre
+const spectrumHover = { active: false, x: 0 };
+dom.spectrumCanvas.addEventListener('mousemove', e => {
+    const rect = dom.spectrumCanvas.getBoundingClientRect();
+    spectrumHover.active = true;
+    spectrumHover.x = e.clientX - rect.left;
+});
+dom.spectrumCanvas.addEventListener('mouseleave', () => {
+    spectrumHover.active = false;
+});
+
 function renderSpectrum(dataArray) {
     const canvas = dom.spectrumCanvas;
     const W = canvas.offsetWidth;
@@ -644,6 +655,47 @@ function renderSpectrum(dataArray) {
     dom.dominantFreq.textContent = domFreq > 0
         ? (domFreq < 1000 ? domFreq.toFixed(0) + ' Hz' : (domFreq / 1000).toFixed(2) + ' kHz')
         : '– Hz';
+
+    // Curseur de survol : ligne verticale + étiquette fréquence
+    if (spectrumHover.active) {
+        const hx = spectrumHover.x;
+        const hoverFreq = minFreq + (hx / W) * (maxFreq - minFreq);
+        const freqLabel = hoverFreq < 1000
+            ? hoverFreq.toFixed(0) + ' Hz'
+            : (hoverFreq / 1000).toFixed(2) + ' kHz';
+
+        // Ligne verticale
+        specCtx.save();
+        specCtx.strokeStyle = 'rgba(255,255,255,0.55)';
+        specCtx.lineWidth = 1;
+        specCtx.setLineDash([4, 3]);
+        specCtx.beginPath();
+        specCtx.moveTo(hx, 0);
+        specCtx.lineTo(hx, H);
+        specCtx.stroke();
+        specCtx.setLineDash([]);
+
+        // Bulle d'étiquette
+        specCtx.font = '600 11px Inter, sans-serif';
+        const tw = specCtx.measureText(freqLabel).width;
+        const PAD = 6;
+        const bW = tw + PAD * 2;
+        const bH = 20;
+        const bY = 8;
+        let bX = hx + 8;
+        if (bX + bW > W) bX = hx - bW - 8;
+
+        specCtx.fillStyle = 'rgba(20,20,35,0.82)';
+        specCtx.beginPath();
+        specCtx.roundRect(bX, bY, bW, bH, 4);
+        specCtx.fill();
+
+        specCtx.fillStyle = '#e0e8ff';
+        specCtx.textBaseline = 'middle';
+        specCtx.fillText(freqLabel, bX + PAD, bY + bH / 2);
+        specCtx.restore();
+    }
+
     return domFreq;
 }
 
