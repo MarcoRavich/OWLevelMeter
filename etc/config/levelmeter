@@ -1,0 +1,8 @@
+config general
+	option enabled '0'
+	option device 'hw:0,0'
+	option card '0'
+	option channels '2'
+	option sample_rate '48000'
+	option frame_size '1024'
+	option http_port '8765'

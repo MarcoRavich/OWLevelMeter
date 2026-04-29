@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Audio Level Meter</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h2 { margin-bottom: 15px; color: #333; font-size: 18px; }
+        
+        .meter-display { display: flex; gap: 30px; justify-content: center; margin: 30px 0; }
+        .meter-channel { display: flex; flex-direction: column; align-items: center; }
+        .meter-label { font-weight: bold; margin-bottom: 10px; font-size: 14px; color: #666; }
+        .meter-bar {
+            width: 40px;
+            height: 150px;
+            background: linear-gradient(to top, #ef4444 0%, #f59e0b 50%, #22c55e 100%);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            position: relative;
+        }
+        .meter-fill {
+            width: 100%;
+            height: 100%;
+            background: rgba(28,28,28,0.6);
+            position: absolute;
+            bottom: 0;
+            transition: height 0.1s ease-out;
+        }
+        .meter-peak {
+            width: 100%;
+            height: 2px;
+            background: #ef4444;
+            position: absolute;
+            top: 0;
+            transition: top 0.1s ease-out;
+        }
+        .meter-value {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .clip-indicator {
+            text-align: center;
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-weight: bold;
+            background: #f0f0f0;
+            color: #666;
+        }
+        .clip-indicator.clipping {
+            background: #ef4444;
+            color: white;
+            animation: pulse 0.5s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 14px; }
+        .status.ok { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        
+        .scale {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 8px;
+            margin-top: 5px;
+            font-size: 11px;
+            color: #999;
+            min-width: 30px;
+        }
+        .scale-tick { text-align: center; height: 20px; display: flex; align-items: center; justify-content: center; }
+        
+        button { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #2563eb; }
+        button:active { background: #1d4ed8; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        
+        .loading { text-align: center; color: #999; }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f0f0f0; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>🎙️ Audio Level Meter</h2>
+            
+            <div id="status" class="status ok">Loading...</div>
+            
+            <div class="meter-display">
+                <div class="meter-channel">
+                    <div class="meter-label">Left (L)</div>
+                    <div class="meter-bar">
+                        <div id="meterFillL" class="meter-fill"></div>
+                        <div id="meterPeakL" class="meter-peak"></div>
+                    </div>
+                    <div class="meter-value" id="valueL">-∞</div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; justify-content: flex-end; margin-bottom: 20px;">
+                    <div class="scale">
+                        <div class="scale-tick">0</div>
+                        <div class="scale-tick">-6</div>
+                        <div class="scale-tick">-12</div>
+                        <div class="scale-tick">-20</div>
+                        <div class="scale-tick">-30</div>
+                        <div class="scale-tick">-40</div>
+                        <div class="scale-tick">-60</div>
+                    </div>
+                </div>
+                
+                <div class="meter-channel">
+                    <div class="meter-label">Right (R)</div>
+                    <div class="meter-bar">
+                        <div id="meterFillR" class="meter-fill"></div>
+                        <div id="meterPeakR" class="meter-peak"></div>
+                    </div>
+                    <div class="meter-value" id="valueR">-∞</div>
+                </div>
+            </div>
+            
+            <div id="clipIndicator" class="clip-indicator">🔴 CLIP</div>
+            
+            <div class="btn-group">
+                <button onclick="resetMeters()">Reset Peaks</button>
+                <button onclick="location.href='/luci/admin/services/levelmeter#tab-settings'">Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://127.0.0.1:8765/api/meter';
+        let lastClipTime = 0;
+        
+        function dbToPercent(db) {
+            const min = -60, max = 0;
+            return Math.max(0, Math.min(100, ((db - min) / (max - min)) * 100));
+        }
+        
+        async function updateMeters() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                // Update fill bars (inverted - we fill from bottom)
+                const fillL = 100 - dbToPercent(data.dbL);
+                const fillR = 100 - dbToPercent(data.dbR);
+                
+                document.getElementById('meterFillL').style.height = fillL + '%';
+                document.getElementById('meterFillR').style.height = fillR + '%';
+                
+                // Update peak positions
+                const peakL = dbToPercent(data.peakL);
+                const peakR = dbToPercent(data.peakR);
+                
+                document.getElementById('meterPeakL').style.top = (100 - peakL) + '%';
+                document.getElementById('meterPeakR').style.top = (100 - peakR) + '%';
+                
+                // Update text values
+                document.getElementById('valueL').textContent = isFinite(data.dbL) ? data.dbL.toFixed(1) + ' dB' : '−∞';
+                document.getElementById('valueR').textContent = isFinite(data.dbR) ? data.dbR.toFixed(1) + ' dB' : '−∞';
+                
+                // Update clipping indicator
+                const clipEl = document.getElementById('clipIndicator');
+                if (data.clipping) {
+                    clipEl.classList.add('clipping');
+                    lastClipTime = Date.now();
+                } else if (Date.now() - lastClipTime > 1200) {
+                    clipEl.classList.remove('clipping');
+                }
+                
+                // Update status
+                document.getElementById('status').className = 'status ok';
+                document.getElementById('status').textContent = '✓ Device: ' + data.device + ' | Running';
+                
+            } catch (err) {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').innerHTML = '✗ Daemon not responding<br><small>' + err.message + '</small>';
+            }
+        }
+        
+        function resetMeters() {
+            // The daemon handles peak reset via the service
+            alert('Peaks will reset when the daemon restarts.');
+        }
+        
+        // Initial update and polling
+        updateMeters();
+        setInterval(updateMeters, 100);
+    </script>
+</body>
+</html>
