@@ -1,3 +1,3 @@
-Vu-mètre audio en temps réel pour analyser vos sources (dB, LUFS, spectre, phase stéréo). Détecteur de silence avec alerte. Possibilité d'afficher le Vu-mètre au premier plan en mode picture-in-picture.
+# OpenWrt ALSA-device(s) LuCI vumeters
 
-Essayer en ligne : https://radiotools.be/
+Inspired by @[mrmazure](https://github.com/mrmazure)'s [LevelMeter](https://levelmeter.radiotools.be/)
